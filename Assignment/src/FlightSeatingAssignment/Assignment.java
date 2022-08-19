@@ -9,7 +9,7 @@ import java.util.Scanner;
  *
  */
 public class Assignment {
-
+    
     /**
      * @param args the command line arguments
      */
@@ -74,12 +74,17 @@ public class Assignment {
         // Creating output 2D array as a consolidated result matrix.
         // We can also use 3D array but it will only increase the space complexity without any improvements in time complexity
         // To keep the blocks separated in output, we will write a logic separately.
-        int outputSeatingChart[][] = new int[maxRows][totalCols];
+        String outputSeatingChart[][] = new String[maxRows][totalCols];
         int counter = 1;
 
-        counter = fillAisleSeats(outputSeatingChart, array, blocks, maxRows, counter);
-        counter = fillWindowSeats(outputSeatingChart, array, blocks, counter, totalCols);
-        counter = fillMiddleSeats(outputSeatingChart, maxRows, totalCols, counter);
+        counter = fillAisleSeats(outputSeatingChart, array, blocks, maxRows, counter, people);
+        
+        if (counter != -1){
+            counter = fillWindowSeats(outputSeatingChart, array, blocks, counter, totalCols, people);
+        }
+        if (counter != -1){
+            fillMiddleSeats(outputSeatingChart, maxRows, totalCols, counter, people);
+        }
 
         displayOutputResults(outputSeatingChart, maxRows, totalCols, people, counter);
     }
@@ -96,7 +101,7 @@ public class Assignment {
      * @param counter
      * @return
      */
-    private static int fillAisleSeats(int[][] outputSeatingChart, int[][] array, int blocks, int maxRows, int counter) {
+    private static int fillAisleSeats(String[][] outputSeatingChart, int[][] array, int blocks, int maxRows, int counter, int people) {
 
         // first we will set the arrangement for aisle seats
         // rows iterator
@@ -112,8 +117,11 @@ public class Assignment {
                         continue;
                     } else {
                         k += array[j][0] - 1;
-                        outputSeatingChart[i][k] = counter;
-                        counter++;
+                        outputSeatingChart[i][k] = counter + "_A";
+                        counter = counter < people ? counter + 1 : -1;
+                        if (counter == -1) {
+                            return -1;
+                        }
                     }
                 } else if (j == blocks - 1) {
                     // skip next execution if last block rows are not eligible
@@ -122,8 +130,11 @@ public class Assignment {
                     }
                     // Last block only has one aisle
                     k += 1;
-                    outputSeatingChart[i][k] = counter;
-                    counter++;
+                    outputSeatingChart[i][k] = counter + "_A";
+                    counter = counter < people ? counter + 1 : -1;
+                    if (counter == -1) {
+                        return -1;
+                    }
                 } else if (j != 0 && j != blocks - 1) {
                     // Update value for k skipping the middle blocks if rows are not eligible.
                     if (i >= array[j][1]) {
@@ -132,16 +143,21 @@ public class Assignment {
                     }
                     // For middle blocks, we can set two aisle at once
                     k += 1;
-                    outputSeatingChart[i][k] = counter;
-                    counter++;
+                    outputSeatingChart[i][k] = counter + "_A";
+                    counter = counter < people ? counter + 1 : -1;
+                    if (counter == -1) {
+                        return -1;
+                    }
 
                     k += array[j][0] - 1;
-                    outputSeatingChart[i][k] = counter;
-                    counter++;
+                    outputSeatingChart[i][k] = counter + "_A";
+                    counter = counter < people ? counter + 1 : -1;
+                    if (counter == -1) {
+                        return -1;
+                    }
                 }
             }
         }
-        
         return counter;
     }
 
@@ -157,7 +173,7 @@ public class Assignment {
      * @param totalCols
      * @return
      */
-    private static int fillWindowSeats(int[][] outputSeatingChart, int[][] array, int blocks, int counter, int totalCols) {
+    private static int fillWindowSeats(String[][] outputSeatingChart, int[][] array, int blocks, int counter, int totalCols, int people) {
 
         int leftWindowSeats = array[0][1], rightWindowSeats = array[blocks - 1][1];
         int compareFlag = 0, min = 0;
@@ -173,69 +189,77 @@ public class Assignment {
 
         for (int i = 0; i < min; i++) {
             // Setting the left window
-            outputSeatingChart[i][0] = counter;
+            outputSeatingChart[i][0] = counter + "_W";
             counter++;
             // Setting right window
-            outputSeatingChart[i][totalCols - 1] = counter;
-            counter++;
+            outputSeatingChart[i][totalCols - 1] = counter + "_W";
+            counter = counter < people ? counter + 1 : -1;
+            if (counter == -1) {
+                return -1;
+            }
         }
 
         // Based on more rows in either side of window, we do the increment based on the flag.
         if (compareFlag == 0) {
             for (int i = min; i < leftWindowSeats; i++) {
-                outputSeatingChart[i][0] = counter;
-                counter++;
+                outputSeatingChart[i][0] = counter + "_W";
+                counter = counter < people ? counter + 1 : -1;
+                if (counter == -1) {
+                    return -1;
+                }
             }
         } else if (compareFlag == 1) {
             for (int i = min; i < rightWindowSeats; i++) {
-                outputSeatingChart[i][totalCols - 1] = counter;
-                counter++;
+                outputSeatingChart[i][totalCols - 1] = counter + "_W";
+                counter = counter < people ? counter + 1 : -1;
+                if (counter == -1) {
+                    return -1;
+                }
             }
         }
-        
         return counter;
     }
 
     /**
-     * Calculate the seating arrangement chart for aisle seats.
+     * Calculate the seating arrangement chart for middle seats.
      *
      *
      * @param outputSeatingChart
-     * @param array
-     * @param blocks
-     * @param people
      * @param maxRows
      * @param totalCols
+     * @param counter
+     * @param people
      * @return
      */
-    private static int fillMiddleSeats(int[][] outputSeatingChart, int maxRows, int totalCols, int counter) {
+    private static int fillMiddleSeats(String[][] outputSeatingChart, int maxRows, int totalCols, int counter, int people) {
 
         // Set the remaining middle seats with the counter in required sequence.
         for (int i = 0; i < maxRows; i++) {
             for (int j = 1; j < totalCols - 1; j++) { 
                 // checking adjacent cell for invalid values to avoid filling non-required cells in output 2d array
-                if (outputSeatingChart[i][j] == 0 && outputSeatingChart[i][j-1] != 0) {
-                    outputSeatingChart[i][j] = counter;
-                    counter++;
+                if (outputSeatingChart[i][j] == null && outputSeatingChart[i][j-1] != null) {
+                    outputSeatingChart[i][j] = counter + "_M";
+                    counter = counter < people ? counter + 1 : -1;
+                    if (counter == -1) {
+                        return -1;
+                    }
                 }
             }
         }
-        
-        return counter - 1;
+        return counter;
     }
     
     /**
-     * Calculate the seating arrangement chart based on priority of aisle,
-     * window and middle seats.
+     * Display the calculated seating arrangement
      *
      * @param outputSeatingChart
      * @param maxRows
      * @param totalCols
      * @return
      */
-    private static void displayOutputResults(int[][] outputSeatingChart, int maxRows, int totalCols, int people, int counter) {
+    private static void displayOutputResults(String[][] outputSeatingChart, int maxRows, int totalCols, int people, int counter) {
         
-        if (counter >= people) {
+        if (counter != -1) {
             System.out.println("\nSeat assignment done successfully!!!");
         }
         else {
@@ -246,7 +270,7 @@ public class Assignment {
         for (int i = 0; i < maxRows; i++) {
             for (int j = 0; j < totalCols; j++) {
                 // Don't display unrequired records like 0
-                if (outputSeatingChart[i][j] == 0 || outputSeatingChart[i][j] > people) {
+                if (outputSeatingChart[i][j] == null) {
                     System.out.printf(" " + "\t");
                 } else {
                     System.out.printf(outputSeatingChart[i][j] + "\t");
